@@ -6,7 +6,7 @@ import type { LeaderboardUser } from './components/Leaderboard';
 import { MatchList } from './components/MatchList';
 import { fetchMatchesFromAPI, fetchScoresFromAPI } from './utils/api';
 import type { Match } from './utils/api';
-import { Trophy, Info, LogOut, AlertTriangle, RefreshCw, User } from 'lucide-react';
+import { Info, LogOut, AlertTriangle, RefreshCw, User } from 'lucide-react';
 
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
@@ -461,8 +461,8 @@ const App: React.FC = () => {
       {/* Premium Header */}
       <header className="glass-panel sticky top-0 z-50 border-b border-white/5 py-4 px-6 md:px-12 flex justify-between items-center shadow-[0_4px_30px_rgba(0,0,0,0.4)] backdrop-blur-xl">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center shadow-glow border border-white/10">
-            <Trophy className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center shadow-glow border border-white/10 overflow-hidden">
+            <img src="/logo.jpg" alt="HTalks Logo" className="w-full h-full object-cover" />
           </div>
           <div>
             <h1 className="text-base md:text-lg font-extrabold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-white via-zinc-200 to-zinc-400 font-mono">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { Lock, User, AlertCircle, Sparkles, LogIn, UserPlus } from 'lucide-react';
+import { Lock, User, AlertCircle, LogIn, UserPlus } from 'lucide-react';
 
 interface AuthProps {
   onAuthSuccess: () => void;
@@ -142,8 +142,8 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
       <div className="absolute -bottom-12 -right-12 w-32 h-32 bg-indigo-600/10 blur-3xl rounded-full"></div>
 
       <div className="flex flex-col items-center mb-6">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center shadow-glow mb-3">
-          <Sparkles className="w-6 h-6 text-white" />
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center shadow-glow mb-3 overflow-hidden">
+          <img src="/logo.jpg" alt="HTalks Logo" className="w-full h-full object-cover" />
         </div>
         <h2 className="text-2xl font-extrabold text-center bg-clip-text text-transparent bg-gradient-to-r from-white via-zinc-200 to-zinc-400 font-mono tracking-wider">
           HTALKS HASTALARI
