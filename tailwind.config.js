@@ -8,51 +8,22 @@ export default {
   theme: {
     extend: {
       colors: {
-        border: "var(--border)",
-        input: "var(--input)",
-        ring: "var(--ring)",
-        background: "var(--background)",
-        foreground: "var(--foreground)",
-        primary: {
-          DEFAULT: "var(--primary)",
-          foreground: "var(--primary-foreground)",
-        },
-        secondary: {
-          DEFAULT: "var(--secondary)",
-          foreground: "var(--secondary-foreground)",
-        },
-        destructive: {
-          DEFAULT: "var(--destructive)",
-          foreground: "var(--destructive-foreground)",
-        },
-        muted: {
-          DEFAULT: "var(--muted)",
-          foreground: "var(--muted-foreground)",
-        },
-        accent: {
-          DEFAULT: "var(--accent)",
-          foreground: "var(--accent-foreground)",
-        },
-        popover: {
-          DEFAULT: "var(--popover)",
-          foreground: "var(--popover-foreground)",
-        },
-        card: {
-          DEFAULT: "var(--card)",
-          foreground: "var(--card-foreground)",
-        },
+        border: "rgba(255, 255, 255, 0.08)",
+        input: "rgba(255, 255, 255, 0.05)",
+        background: "#030014",
+        foreground: "#f4f4f5",
         brand: {
-          dark: '#121214',
-          card: '#1e1e24',
-          accent: '#3b82f6',
+          dark: '#0c0a18',
+          card: 'rgba(12, 10, 24, 0.65)',
+          accent: '#8b5cf6',
           success: '#10b981',
           warning: '#f59e0b',
         }
       },
-      borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+      boxShadow: {
+        glow: '0 0 25px -5px rgba(139, 92, 246, 0.35)',
+        'glow-success': '0 0 25px -5px rgba(16, 185, 129, 0.35)',
+        'glow-accent': '0 0 25px -5px rgba(59, 130, 246, 0.35)',
       }
     },
   },
