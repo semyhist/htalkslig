@@ -21,17 +21,17 @@ export const MatchList: React.FC<MatchListProps> = ({
       </h3>
       {matches.map((match) => {
         const prediction = userPredictions[match.id];
-        const inputDiff = diffInputs[match.id] || (prediction ? String(prediction.diff) : '');
+        const inputDiff = diffInputs[match.id] || (prediction ? String(Math.abs(prediction.diff)) : '');
 
         const handleOutcomeSelect = (outcome: 'home' | 'draw' | 'away') => {
-          const diffVal = parseInt(inputDiff, 10) || 0;
+          const diffVal = outcome === 'draw' ? 0 : (parseInt(inputDiff, 10) || 0);
           onPredict(match.id, outcome, diffVal);
         };
 
         const handleDiffChange = (val: string) => {
           setDiffInputs({ ...diffInputs, [match.id]: val });
           if (prediction) {
-            const diffVal = parseInt(val, 10) || 0;
+            const diffVal = prediction.outcome === 'draw' ? 0 : (parseInt(val, 10) || 0);
             onPredict(match.id, prediction.outcome, diffVal);
           }
         };
@@ -94,9 +94,10 @@ export const MatchList: React.FC<MatchListProps> = ({
               <input
                 type="number"
                 min="0"
-                placeholder="Kazanan takım kaç gol fark atar?"
-                className="w-full bg-transparent text-sm text-white focus:outline-none"
-                value={inputDiff}
+                disabled={prediction?.outcome === 'draw'}
+                placeholder={prediction?.outcome === 'draw' ? "Beraberlik için fark 0'dır" : "Kazanan takım kaç gol fark atar?"}
+                className="w-full bg-transparent text-sm text-white focus:outline-none disabled:opacity-50"
+                value={prediction?.outcome === 'draw' ? '0' : inputDiff}
                 onChange={(e) => handleDiffChange(e.target.value)}
               />
             </div>

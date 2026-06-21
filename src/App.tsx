@@ -92,7 +92,15 @@ const App: React.FC = () => {
   const handlePredict = async (matchId: string, outcome: 'home' | 'draw' | 'away', diff: number) => {
     if (!session?.user || !userProfile) return;
 
-    const newPrediction = { outcome, diff };
+    // Convert diff to signed according to predicted outcome
+    let signedDiff = Math.abs(diff);
+    if (outcome === 'away') {
+      signedDiff = -signedDiff;
+    } else if (outcome === 'draw') {
+      signedDiff = 0;
+    }
+
+    const newPrediction = { outcome, diff: signedDiff };
     setUserPredictions({ ...userPredictions, [matchId]: newPrediction });
 
     const { error } = await supabase.from('predictions').upsert(
@@ -101,7 +109,7 @@ const App: React.FC = () => {
           user_id: session.user.id,
           match_id: matchId,
           predicted_outcome: outcome,
-          predicted_diff: diff,
+          predicted_diff: signedDiff,
         },
       ],
       { onConflict: 'user_id,match_id' }
