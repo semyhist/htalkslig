@@ -80,18 +80,40 @@ const App: React.FC = () => {
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
-        .maybeSingle(); // .single() yerine: profil yoksa null döndürür, hata fırlatmaz
+        .maybeSingle();
 
       if (error) throw error;
 
       if (data) {
+        // Otomatik kullanıcı adı onarımı (user_2dcfc8f5 gibi jenerik ise)
+        if (data.username.startsWith('user_')) {
+          const rawName = session.user.user_metadata?.username || session.user.email?.split('@')[0];
+          if (rawName) {
+            // Regex'e uydurmak için sanitize et: sadece a-z, A-Z, 0-9, _, - ve max 20 kar.
+            const sanitized = rawName.replace(/[^a-zA-Z0-9_\-]/g, '').slice(0, 20);
+            if (sanitized.length >= 3 && sanitized !== data.username) {
+              const { data: updated, error: updateErr } = await supabase
+                .from('profiles')
+                .update({ username: sanitized })
+                .eq('id', session.user.id)
+                .select()
+                .maybeSingle();
+
+              if (!updateErr && updated) {
+                setUserProfile(updated);
+                fetchLeaderboard(); // Leaderboard'u da hemen güncelle
+                return;
+              } else if (updateErr) {
+                console.error('Kullanıcı adı otomatik düzeltilemedi:', updateErr.message);
+              }
+            }
+          }
+        }
         setUserProfile(data);
       } else {
         // Profil yok — oluşturmayı dene (trigger başarısız olmuş olabilir)
-        const username =
-          session.user.user_metadata?.username ||
-          session.user.email?.split('@')[0] ||
-          'user_' + session.user.id.slice(0, 8);
+        const rawName = session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'user_' + session.user.id.slice(0, 8);
+        const username = rawName.replace(/[^a-zA-Z0-9_\-]/g, '').slice(0, 20) || 'user_' + session.user.id.slice(0, 8);
 
         const { data: created, error: createErr } = await supabase
           .from('profiles')
@@ -103,6 +125,7 @@ const App: React.FC = () => {
           console.error('Profile auto-create error:', createErr);
         } else if (created) {
           setUserProfile(created);
+          fetchLeaderboard();
         }
       }
     } catch (err: any) {
@@ -200,16 +223,46 @@ const App: React.FC = () => {
         }
       }
 
-      // 2. Decide if we need to sync with the external API
+      // 2. Decide if we need to sync with the external API (Dynamic Cooldown Optimization)
       let shouldSync = false;
 
       if (!dbMatches || dbMatches.length === 0) {
         shouldSync = true;
       } else {
+        const now = Date.now();
         const lastUpdated = Math.max(...dbMatches.map(m => new Date(m.updated_at || 0).getTime()));
-        const timeSinceLastUpdate = Date.now() - lastUpdated;
-        const cooldownPeriod = 4 * 60 * 60 * 1000; // 4 hours cache cooldown
-        
+        const timeSinceLastUpdate = now - lastUpdated;
+
+        // Dinamik Cooldown Belirleme:
+        let cooldownPeriod = 12 * 60 * 60 * 1000; // Varsayılan: 12 saat (Ölü zamanlar/Maç olmayan günler)
+        let cooldownReason = 'Maç olmayan dönem (12 Saat)';
+
+        // Maç listesini analiz et
+        const matchesAnalysis = dbMatches.map(m => {
+          const matchTime = new Date(m.commence_time).getTime();
+          return {
+            time: matchTime,
+            status: m.status,
+            // Maç başladıktan sonraki 3.5 saatlik aktif süre penceresi
+            isActiveWindow: now >= matchTime - 15 * 60 * 1000 && now <= matchTime + (3.5 * 60 * 60 * 1000),
+            // Önümüzdeki 12 saat içinde başlayacak maç
+            isUpcomingSoon: now < matchTime && matchTime - now <= 12 * 60 * 60 * 1000
+          };
+        });
+
+        const hasActiveMatch = matchesAnalysis.some(m => m.isActiveWindow && m.status !== 'completed');
+        const hasUpcomingSoon = matchesAnalysis.some(m => m.isUpcomingSoon);
+
+        if (hasActiveMatch) {
+          cooldownPeriod = 20 * 60 * 1000; // Maç oynanırken veya yeni bittiğinde 20 dakika
+          cooldownReason = 'Canlı Maç Süreci (20 Dakika)';
+        } else if (hasUpcomingSoon) {
+          cooldownPeriod = 2 * 60 * 60 * 1000; // Yaklaşan maç varken 2 saat
+          cooldownReason = 'Yaklaşan Maç Süreci (2 Saat)';
+        }
+
+        console.log(`[API Sync] Dinamik Cooldown Durumu: ${cooldownReason}. Son güncellemeden beri geçen süre: ${Math.round(timeSinceLastUpdate / 1000 / 60)} dk. Limit: ${Math.round(cooldownPeriod / 1000 / 60)} dk.`);
+
         if (timeSinceLastUpdate > cooldownPeriod) {
           shouldSync = true;
         }
@@ -217,12 +270,44 @@ const App: React.FC = () => {
 
       let finalMatchesList = dbMatches || [];
 
-      // 3. If we should sync, fetch matches and scores and sync
+      // 3. If we should sync, fetch matches and/or scores selectively
       if (shouldSync) {
-        const [apiMatches, apiScores] = await Promise.all([
-          fetchMatchesFromAPI(apiKey),
-          fetchScoresFromAPI(apiKey)
-        ]);
+        let apiMatches: any[] = [];
+        let apiScores: any[] = [];
+
+        const now = Date.now();
+        const lastOddsFetch = localStorage.getItem('last_odds_fetch_time');
+        const timeSinceLastOddsFetch = lastOddsFetch ? now - parseInt(lastOddsFetch, 10) : Infinity;
+        const oddsCooldown = 12 * 60 * 60 * 1000; // 12 saat odds cooldown (günde maks 2 kez)
+
+        // Veritabanı boşsa veya 12 saat geçmişse odds (maç oranları/yeni maçlar) çekilir
+        const needOdds = !dbMatches || dbMatches.length === 0 || timeSinceLastOddsFetch > oddsCooldown;
+
+        try {
+          const promises: Promise<any>[] = [];
+          
+          if (needOdds) {
+            console.log('[API Sync] Oranlar ve yeni maçlar çekiliyor (/odds)...');
+            promises.push(fetchMatchesFromAPI(apiKey).then(res => {
+              apiMatches = res;
+              localStorage.setItem('last_odds_fetch_time', String(now));
+              return res;
+            }));
+          } else {
+            console.log('[API Sync] Oranlar önbellekten kullanılıyor (Odds API çağrısı atlandı).');
+          }
+
+          // Skorlar her sync durumunda çekilir (canlı skor takibi için)
+          console.log('[API Sync] Skorlar ve maç sonuçları çekiliyor (/scores)...');
+          promises.push(fetchScoresFromAPI(apiKey).then(res => {
+            apiScores = res;
+            return res;
+          }));
+
+          await Promise.all(promises);
+        } catch (apiErr) {
+          console.error('[API Sync] API isteklerinden biri başarısız oldu:', apiErr);
+        }
 
         const { data: { session: activeSession } } = await supabase.auth.getSession();
         
@@ -230,40 +315,25 @@ const App: React.FC = () => {
           const dbMatchMap = new Map(dbMatches?.map(m => [m.id, m]));
           const rowsToUpsert = [];
 
-          for (const apiM of apiMatches) {
-            const existing = dbMatchMap.get(apiM.id);
-            const scoreItem = apiScores.find(s => s.id === apiM.id);
-            const isCompleted = scoreItem?.completed || false;
-            
-            let homeScore: number | undefined = undefined;
-            let awayScore: number | undefined = undefined;
-            if (scoreItem?.scores) {
-              const hScore = scoreItem.scores.find(s => s.name === apiM.home_team)?.score;
-              const aScore = scoreItem.scores.find(s => s.name === apiM.away_team)?.score;
-              if (hScore !== undefined) homeScore = parseInt(hScore, 10);
-              if (aScore !== undefined) awayScore = parseInt(aScore, 10);
-            }
-
-            const status = isCompleted ? 'completed' : 'pending';
-
-            if (!existing) {
-              rowsToUpsert.push({
-                id: apiM.id,
-                home_team: apiM.home_team,
-                away_team: apiM.away_team,
-                commence_time: apiM.commence_time,
-                home_odd: apiM.home_odd,
-                draw_odd: apiM.draw_odd,
-                away_odd: apiM.away_odd,
-                status: status,
-                home_score: homeScore,
-                away_score: awayScore
-              });
-            } else {
-              const statusChanged = existing.status !== status;
-              const scoreChanged = existing.home_score !== homeScore || existing.away_score !== awayScore;
+          // Sadece odds çekildiyse yeni maçları veya oranları güncelle
+          if (apiMatches.length > 0) {
+            for (const apiM of apiMatches) {
+              const existing = dbMatchMap.get(apiM.id);
+              const scoreItem = apiScores.find(s => s.id === apiM.id);
+              const isCompleted = scoreItem?.completed || false;
               
-              if (existing.status === 'pending' || statusChanged || scoreChanged) {
+              let homeScore: number | undefined = undefined;
+              let awayScore: number | undefined = undefined;
+              if (scoreItem?.scores) {
+                const hScore = scoreItem.scores.find((s: any) => s.name === apiM.home_team)?.score;
+                const aScore = scoreItem.scores.find((s: any) => s.name === apiM.away_team)?.score;
+                if (hScore !== undefined) homeScore = parseInt(hScore, 10);
+                if (aScore !== undefined) awayScore = parseInt(aScore, 10);
+              }
+
+              const status = isCompleted ? 'completed' : 'pending';
+
+              if (!existing) {
                 rowsToUpsert.push({
                   id: apiM.id,
                   home_team: apiM.home_team,
@@ -273,9 +343,27 @@ const App: React.FC = () => {
                   draw_odd: apiM.draw_odd,
                   away_odd: apiM.away_odd,
                   status: status,
-                  home_score: homeScore !== undefined ? homeScore : existing.home_score,
-                  away_score: awayScore !== undefined ? awayScore : existing.away_score
+                  home_score: homeScore,
+                  away_score: awayScore
                 });
+              } else {
+                const statusChanged = existing.status !== status;
+                const scoreChanged = existing.home_score !== homeScore || existing.away_score !== awayScore;
+                
+                if (existing.status === 'pending' || statusChanged || scoreChanged) {
+                  rowsToUpsert.push({
+                    id: apiM.id,
+                    home_team: apiM.home_team,
+                    away_team: apiM.away_team,
+                    commence_time: apiM.commence_time,
+                    home_odd: apiM.home_odd,
+                    draw_odd: apiM.draw_odd,
+                    away_odd: apiM.away_odd,
+                    status: status,
+                    home_score: homeScore !== undefined ? homeScore : existing.home_score,
+                    away_score: awayScore !== undefined ? awayScore : existing.away_score
+                  });
+                }
               }
             }
           }
@@ -286,8 +374,8 @@ const App: React.FC = () => {
               let homeScore: number | undefined = undefined;
               let awayScore: number | undefined = undefined;
               if (scoreItem.scores) {
-                const hScore = scoreItem.scores.find(s => s.name === existing.home_team)?.score;
-                const aScore = scoreItem.scores.find(s => s.name === existing.away_team)?.score;
+                const hScore = scoreItem.scores.find((s: any) => s.name === existing.home_team)?.score;
+                const aScore = scoreItem.scores.find((s: any) => s.name === existing.away_team)?.score;
                 if (hScore !== undefined) homeScore = parseInt(hScore, 10);
                 if (aScore !== undefined) awayScore = parseInt(aScore, 10);
               }
@@ -451,7 +539,7 @@ const App: React.FC = () => {
       if (match.status === 'completed') {
         return matchTime >= now - oneDay && matchTime <= now;
       } else {
-        return matchTime >= now - (3 * 60 * 60 * 1000) && matchTime <= now + oneDay;
+        return matchTime >= now - (1 * 60 * 60 * 1000) && matchTime <= now + oneDay;
       }
     }
   });
@@ -607,7 +695,7 @@ const App: React.FC = () => {
               </li>
               <li className="flex items-start gap-2.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-violet-500 mt-1.5 shrink-0"></span>
-                <span>Tahminler maç başlangıç saatine kadar değiştirilebilir.</span>
+                <span>Tahminler maç başlangıç saatinden <strong>1 saat önceye kadar</strong> değiştirilebilir.</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-violet-500 mt-1.5 shrink-0"></span>
