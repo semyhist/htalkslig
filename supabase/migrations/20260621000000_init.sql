@@ -79,7 +79,11 @@ begin
   insert into public.profiles (id, username, total_points)
   values (
     new.id,
-    coalesce(new.raw_user_meta_data->>'username', 'user_' || substr(new.id::text, 1, 8)),
+    coalesce(
+      new.raw_user_meta_data->>'username',
+      split_part(new.email, '@', 1),
+      'user_' || substr(new.id::text, 1, 8)
+    ),
     0
   );
   return new;

@@ -90,6 +90,7 @@ const App: React.FC = () => {
         // Profil yok — oluşturmayı dene (trigger başarısız olmuş olabilir)
         const username =
           session.user.user_metadata?.username ||
+          session.user.email?.split('@')[0] ||
           'user_' + session.user.id.slice(0, 8);
 
         const { data: created, error: createErr } = await supabase
@@ -111,21 +112,33 @@ const App: React.FC = () => {
 
   const fetchLeaderboard = async () => {
     try {
-      const { data, error, status } = await supabase
-        .from('profiles')
-        .select('id, username, total_points')
-        .order('total_points', { ascending: false });
+      // Try to use the new function first
+      const { data: functionData, error: functionError } = await supabase
+        .rpc('get_leaderboard_with_usernames');
 
-      if (error) {
-        console.error('Leaderboard fetch error:', error);
-        if (status === 404 || error.message?.includes('profiles') || error.message?.includes('does not exist')) {
-          setDbError('Supabase veritabanı tabloları bulunamadı. Lütfen "supabase/migrations/20260621000000_init.sql" içerisindeki şemayı Supabase SQL Editor\'de çalıştırın.');
+      if (functionError) {
+        console.warn('get_leaderboard_with_usernames RPC error, falling back to direct query:', functionError.message);
+        
+        // Fallback to direct query
+        const { data, error, status } = await supabase
+          .from('profiles')
+          .select('id, username, total_points')
+          .order('total_points', { ascending: false });
+
+        if (error) {
+          console.error('Leaderboard fetch error:', error);
+          if (status === 404 || error.message?.includes('profiles') || error.message?.includes('does not exist')) {
+            setDbError('Supabase veritabanı tabloları bulunamadı. Lütfen "supabase/migrations/20260621000000_init.sql" içerisindeki şemayı Supabase SQL Editor\'de çalıştırın.');
+          } else {
+            setDbError('Veritabanına bağlanılamadı: ' + error.message);
+          }
         } else {
-          setDbError('Veritabanına bağlanılamadı: ' + error.message);
+          setDbError(null);
+          if (data) setUsers(data);
         }
       } else {
         setDbError(null);
-        if (data) setUsers(data);
+        if (functionData) setUsers(functionData);
       }
     } catch (err: any) {
       console.error('Catch error fetching leaderboard:', err);
@@ -468,6 +481,7 @@ const App: React.FC = () => {
                 <span className="text-sm font-bold text-zinc-200">
                   {userProfile?.username ||
                     session.user.user_metadata?.username ||
+                    session.user.email?.split('@')[0] ||
                     'Kullanıcı'}
                 </span>
               </div>

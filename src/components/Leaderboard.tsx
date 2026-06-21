@@ -12,7 +12,7 @@ interface LeaderboardProps {
   currentUserId?: string;
 }
 
-export const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUserId }) => {
+export const Leaderboard: React.FC<LeaderboardProps> = React.memo(({ users, currentUserId }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -198,4 +198,4 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUserId }
       )}
     </>
   );
-};
+});

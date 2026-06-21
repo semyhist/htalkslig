@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://htalkslig.com/sitemap.xml

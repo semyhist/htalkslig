@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Minus, CheckCircle, Clock, Award, Lock, Save, AlertCircle } from 'lucide-react';
 
 export interface MatchData {
@@ -19,6 +19,113 @@ interface PredictionCardProps {
   initialPrediction?: { outcome: 'home' | 'draw' | 'away'; diff: number };
   onPredict: (matchId: string, outcome: 'home' | 'draw' | 'away', diff: number) => Promise<void>;
 }
+
+// Map English country names to Turkish for display
+const englishToTurkish: Record<string, string> = {
+  // --- EUROPE (UEFA) ---
+  'france': 'Fransa',
+  'germany': 'Almanya',
+  'spain': 'İspanya',
+  'italy': 'İtalya',
+  'england': 'İngiltere',
+  'netherlands': 'Hollanda',
+  'belgium': 'Belçika',
+  'portugal': 'Portekiz',
+  'croatia': 'Hırvatistan',
+  'switzerland': 'İsviçre',
+  'denmark': 'Danimarka',
+  'sweden': 'İsveç',
+  'poland': 'Polonya',
+  'austria': 'Avusturya',
+  'norway': 'Norveç',
+  'turkey': 'Türkiye',
+  'scotland': 'İskoçya',
+  'wales': 'Galler',
+  'ukraine': 'Ukrayna',
+  'hungary': 'Macaristan',
+  'czech republic': 'Çekya',
+  'czechia': 'Çekya',
+  'serbia': 'Sırbistan',
+  'romania': 'Romanya',
+  'slovakia': 'Slovakya',
+  'georgia': 'Gürcistan',
+  'albania': 'Arnavutluk',
+  'slovenia': 'Slovenya',
+  'greece': 'Yunanistan',
+  'bulgaria': 'Bulgaristan',
+  'iceland': 'İzlanda',
+  'ireland': 'İrlanda',
+  'northern ireland': 'Kuzey İrlanda',
+  'finland': 'Finlandiya',
+
+  // --- SOUTH AMERICA (CONMEBOL) ---
+  'argentina': 'Arjantin',
+  'brazil': 'Brezilya',
+  'uruguay': 'Uruguay',
+  'colombia': 'Kolombiya',
+  'ecuador': 'Ekvador',
+  'chile': 'Şili',
+  'peru': 'Peru',
+  'paraguay': 'Paraguay',
+  'venezuela': 'Venezuela',
+  'bolivia': 'Bolivya',
+
+  // --- NORTH & CENTRAL AMERICA (CONCACAF) ---
+  'usa': 'ABD',
+  'united states': 'ABD',
+  'america': 'ABD',
+  'mexico': 'Meksika',
+  'canada': 'Kanada',
+  'panama': 'Panama',
+  'costa rica': 'Kosta Rika',
+  'jamaica': 'Jamaika',
+  'honduras': 'Honduras',
+  'el salvador': 'El Salvador',
+  'haiti': 'Haiti',
+  'curacao': 'Curaçao',
+
+  // --- AFRICA (CAF) ---
+  'morocco': 'Fas',
+  'senegal': 'Senegal',
+  'tunisia': 'Tunus',
+  'algeria': 'Cezayir',
+  'egypt': 'Mısır',
+  'nigeria': 'Nijerya',
+  'cameroon': 'Kamerun',
+  'ivory coast': 'Fildişi Sahili',
+  'ghana': 'Gana',
+  'mali': 'Mali',
+  'south africa': 'Güney Afrika',
+  'cabo verde': 'Yeşil Burun',
+  'cape verde': 'Yeşil Burun',
+  'angola': 'Angola',
+  'dr congo': 'Demokratik Kongo Cumhuriyeti',
+  'congo': 'Kongo',
+  'guinea': 'Gine',
+
+  // --- ASIA (AFC) ---
+  'japan': 'Japonya',
+  'south korea': 'Güney Kore',
+  'iran': 'İran',
+  'saudi arabia': 'Suudi Arabistan',
+  'australia': 'Avustralya',
+  'uzbekistan': 'Özbekistan',
+  'jordan': 'Ürdün',
+  'qatar': 'Katar',
+  'iraq': 'Irak',
+  'uae': 'BAE',
+  'united arab emirates': 'BAE',
+  'china': 'Çin',
+  'oman': 'Umman',
+  'bahrain': 'Bahreyn',
+  'syria': 'Suriye',
+  'palestine': 'Filistin',
+  'kyrgyzstan': 'Kırgızistan',
+
+  // --- OCEANIA (OFC) ---
+  'new zealand': 'Yeni Zelanda',
+  'solomon islands': 'Solomon Adaları'
+};
 
 // Map country names (Turkish & English) to ISO-2 codes
 const countryCodes: Record<string, string> = {
@@ -121,7 +228,7 @@ const countryCodes: Record<string, string> = {
   'solomon adalari': 'sb', 'solomon islands': 'sb'
 };
 
-export const PredictionCard: React.FC<PredictionCardProps> = ({
+export const PredictionCard: React.FC<PredictionCardProps> = React.memo(({
   match,
   initialPrediction,
   onPredict,
@@ -210,6 +317,11 @@ export const PredictionCard: React.FC<PredictionCardProps> = ({
       .replace(/ç/g, 'c');
   };
 
+  const translateToTurkish = (name: string): string => {
+    const normalizedName = normalizeTeamName(name);
+    return englishToTurkish[normalizedName] || name;
+  };
+
   const renderFlag = (teamName: string) => {
     const normalized = normalizeTeamName(teamName);
     const code = countryCodes[normalized];
@@ -288,7 +400,7 @@ export const PredictionCard: React.FC<PredictionCardProps> = ({
               {renderFlag(match.home_team)}
             </div>
             <span className="text-xs font-bold tracking-wide uppercase text-zinc-200 truncate max-w-full">
-              {match.home_team}
+              {translateToTurkish(match.home_team)}
             </span>
           </div>
           
@@ -311,7 +423,7 @@ export const PredictionCard: React.FC<PredictionCardProps> = ({
               {renderFlag(match.away_team)}
             </div>
             <span className="text-xs font-bold tracking-wide uppercase text-zinc-200 truncate max-w-full">
-              {match.away_team}
+              {translateToTurkish(match.away_team)}
             </span>
           </div>
         </div>
@@ -326,9 +438,9 @@ export const PredictionCard: React.FC<PredictionCardProps> = ({
               Tahminin:{' '}
               <strong className="text-violet-400 font-bold uppercase">
                 {outcome === 'home'
-                  ? match.home_team
+                  ? translateToTurkish(match.home_team)
                   : outcome === 'away'
-                  ? match.away_team
+                  ? translateToTurkish(match.away_team)
                   : outcome === 'draw'
                   ? 'Beraberlik'
                   : 'Yok'}{' '}
@@ -355,7 +467,7 @@ export const PredictionCard: React.FC<PredictionCardProps> = ({
                 <p className="text-[10px] text-zinc-500 mt-0.5">
                   Tahminin:{' '}
                   <span className="text-violet-400 font-bold">
-                    {outcome === 'home' ? match.home_team : outcome === 'away' ? match.away_team : 'Beraberlik'}
+                    {outcome === 'home' ? translateToTurkish(match.home_team) : outcome === 'away' ? translateToTurkish(match.away_team) : 'Beraberlik'}
                     {outcome !== 'draw' && ` • ${Math.abs(parseInt(diff, 10) || 0)} Fark`}
                   </span>
                 </p>
@@ -378,7 +490,7 @@ export const PredictionCard: React.FC<PredictionCardProps> = ({
                   : 'bg-black/20 border-white/5 text-zinc-400 hover:border-violet-500/30 hover:text-zinc-200'
               }`}
             >
-              <span className="truncate max-w-full font-mono text-[9px] font-bold uppercase tracking-wider mb-1">{match.home_team}</span>
+              <span className="truncate max-w-full font-mono text-[9px] font-bold uppercase tracking-wider mb-1">{translateToTurkish(match.home_team)}</span>
               <span className="text-[9px] opacity-75 font-mono font-bold bg-black/30 px-1.5 py-0.5 rounded border border-white/5">Oran: {match.home_odd}</span>
             </button>
 
@@ -402,7 +514,7 @@ export const PredictionCard: React.FC<PredictionCardProps> = ({
                   : 'bg-black/20 border-white/5 text-zinc-400 hover:border-violet-500/30 hover:text-zinc-200'
               }`}
             >
-              <span className="truncate max-w-full font-mono text-[9px] font-bold uppercase tracking-wider mb-1">{match.away_team}</span>
+              <span className="truncate max-w-full font-mono text-[9px] font-bold uppercase tracking-wider mb-1">{translateToTurkish(match.away_team)}</span>
               <span className="text-[9px] opacity-75 font-mono font-bold bg-black/30 px-1.5 py-0.5 rounded border border-white/5">Oran: {match.away_odd}</span>
             </button>
           </div>
@@ -496,5 +608,5 @@ export const PredictionCard: React.FC<PredictionCardProps> = ({
       )}
     </div>
   );
-};
+});
 
