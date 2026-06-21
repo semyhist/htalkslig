@@ -1,73 +1,79 @@
-# React + TypeScript + Vite
+# HTalks Hastaları Dünya Kupası Tahmin Ligi
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Arkadaşlarınla yarış, FIFA Dünya Kupası maç tahminleri yap, puan topla ve liderlik tablosuna çık!
 
-Currently, two official plugins are available:
+## Özellikler
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- 🏆 **Gerçek Zamanlı Maç Verileri** — The Odds API entegrasyonu ile güncel maçlar ve oranlar
+- ⚡ **24 Saatlik Kayan Pencere** — Yalnızca yaklaşan 24 saatteki maçlar tahmin edilebilir
+- 🎯 **Otomatik Puanlama** — Maç sonuçları otomatik çekilir, puanlar anında hesaplanır
+- 📊 **Canlı Liderlik Tablosu** — Tüm katılımcıları görmek için genişletilebilir arama destekli tablo
+- 🔐 **Kullanıcı Adı + Şifre Auth** — E-posta gerektirmeyen basit kayıt ve giriş sistemi
+- 💾 **Supabase Backend** — Tüm maçlar, tahminler ve profiller veritabanında saklanır
+- 🎨 **Premium Dark UI** — Glassmorphism, neon aksan ve micro-animasyonlar
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Kurulum
 
-## Expanding the ESLint configuration
+### Gereksinimler
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- Node.js 20+
+- Supabase hesabı
+- The Odds API anahtarı
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Adımlar
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+```bash
+# 1. Bağımlılıkları kur
+npm install
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# 2. Ortam değişkenlerini ayarla
+cp .env.example .env
+# .env dosyasını düzenle
+
+# 3. Supabase şemasını çalıştır
+# Supabase Dashboard → SQL Editor → supabase/migrations/20260621000000_init.sql
+
+# 4. Geliştirme sunucusunu başlat
+npm run dev
+
+# 5. Production build
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Ortam Değişkenleri
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+VITE_SUPABASE_URL=https://xxxxx.supabase.co
+VITE_SUPABASE_ANON_KEY=sb_publishable_xxxxx
+VITE_THE_ODDS_API_KEY=your_odds_api_key
 ```
+
+### Supabase Ayarları
+
+1. Supabase Dashboard → **Authentication → Providers → Email** → **Confirm email** seçeneğini **KAPATIN**
+2. SQL Editor'de `supabase/migrations/20260621000000_init.sql` dosyasını çalıştırın
+
+---
+
+## Tech Stack
+
+| Katman | Teknoloji |
+|--------|-----------|
+| Frontend | React 19, TypeScript, Vite |
+| Styling | Tailwind CSS, Vanilla CSS |
+| Backend | Supabase (PostgreSQL + Auth) |
+| API | The Odds API (v4) |
+| Icons | Lucide React |
+| Test | Vitest |
+
+---
+
+## Yasal
+
+Bu platform yalnızca eğlence ve sosyal rekabet amaçlı bir **ücretsiz tahmin oyunudur**. Gerçek para, bahis veya kumar içermez. Platformda kazanılan puanların herhangi bir maddi karşılığı yoktur.
+
+---
+
+**Yapımcı:** [Semih Aydın](https://semihaydin.dev)

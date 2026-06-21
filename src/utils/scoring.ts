@@ -4,7 +4,7 @@ export function calculateBasePoints(
   odds: number
 ): number {
   if (predictedOutcome === actualOutcome) {
-    return Math.round(odds * 10);
+    return Math.round(odds);
   }
   return 0;
 }

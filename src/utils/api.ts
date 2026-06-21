@@ -38,47 +38,26 @@ interface OddsApiResponseItem {
   bookmakers: Bookmaker[];
 }
 
-export function generateMockMatches(): Match[] {
-  const now = new Date();
-  const day = (d: number) => new Date(now.getTime() + d * 24 * 60 * 60 * 1000).toISOString();
+export interface ScoreItem {
+  name: string;
+  score: string;
+}
 
-  return [
-    {
-      id: 'mock-match-1',
-      home_team: 'Arjantin',
-      away_team: 'Fransa',
-      commence_time: day(0), // Today
-      home_odd: 2.10,
-      draw_odd: 3.20,
-      away_odd: 3.50,
-      status: 'pending'
-    },
-    {
-      id: 'mock-match-2',
-      home_team: 'Brezilya',
-      away_team: 'Almanya',
-      commence_time: day(1), // Tomorrow
-      home_odd: 1.85,
-      draw_odd: 3.60,
-      away_odd: 4.20,
-      status: 'pending'
-    },
-    {
-      id: 'mock-match-3',
-      home_team: 'İspanya',
-      away_team: 'İtalya',
-      commence_time: day(2), // In 2 days
-      home_odd: 2.30,
-      draw_odd: 3.10,
-      away_odd: 3.20,
-      status: 'pending'
-    }
-  ];
+export interface ScoresApiResponseItem {
+  id: string;
+  sport_key: string;
+  sport_title: string;
+  commence_time: string;
+  completed: boolean;
+  home_team: string;
+  away_team: string;
+  scores: ScoreItem[] | null;
 }
 
 export async function fetchMatchesFromAPI(apiKey: string): Promise<Match[]> {
   if (!apiKey) {
-    return generateMockMatches();
+    console.warn('The Odds API key is missing. Cannot fetch matches.');
+    return [];
   }
 
   try {
@@ -108,7 +87,27 @@ export async function fetchMatchesFromAPI(apiKey: string): Promise<Match[]> {
       };
     });
   } catch (error) {
-    console.error('API fetch failed, falling back to mock data:', error);
-    return generateMockMatches();
+    console.error('API fetch matches failed:', error);
+    return [];
+  }
+}
+
+export async function fetchScoresFromAPI(apiKey: string): Promise<ScoresApiResponseItem[]> {
+  if (!apiKey) {
+    console.warn('The Odds API key is missing. Cannot fetch scores.');
+    return [];
+  }
+
+  try {
+    const response = await fetch(
+      `https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup/scores/?apiKey=${apiKey}&daysFrom=3`
+    );
+    if (!response.ok) {
+      throw new Error('API fetch scores failed');
+    }
+    return await response.json() as ScoresApiResponseItem[];
+  } catch (error) {
+    console.error('API fetch scores failed:', error);
+    return [];
   }
 }

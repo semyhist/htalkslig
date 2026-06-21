@@ -3,10 +3,10 @@ import { calculateBasePoints, calculateMarginBonuses } from './scoring';
 
 describe('Scoring Logic Tests', () => {
   describe('calculateBasePoints', () => {
-    it('should return Math.round(odds * 10) for correct predictions', () => {
-      expect(calculateBasePoints('home', 'home', 1.85)).toBe(19);
-      expect(calculateBasePoints('draw', 'draw', 3.44)).toBe(34);
-      expect(calculateBasePoints('away', 'away', 4.10)).toBe(41);
+    it('should return Math.round(odds) for correct predictions', () => {
+      expect(calculateBasePoints('home', 'home', 1.85)).toBe(2);
+      expect(calculateBasePoints('draw', 'draw', 3.44)).toBe(3);
+      expect(calculateBasePoints('away', 'away', 4.10)).toBe(4);
     });
 
     it('should return 0 for incorrect predictions', () => {

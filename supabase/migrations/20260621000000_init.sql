@@ -44,12 +44,18 @@ alter table public.predictions enable row level security;
 create policy "Allow public read on profiles" on public.profiles
   for select using (true);
 
+create policy "Allow insert on profiles" on public.profiles
+  for insert with check (true);
+
 create policy "Allow individual insert/update on profiles" on public.profiles
   for all using (auth.uid() = id);
 
 -- Matches Policies
 create policy "Allow public read on matches" on public.matches
   for select using (true);
+
+create policy "Allow authenticated users to manage matches" on public.matches
+  for all using (auth.uid() is not null);
 
 -- Predictions Policies
 create policy "Allow public read on predictions" on public.predictions
@@ -64,5 +70,22 @@ create policy "Allow individual updates on open predictions" on public.predictio
     exists (
       select 1 from public.matches 
       where id = match_id and commence_time > now()
-    )
   );
+
+-- 4. Automatic Profile Creation Trigger
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, username, total_points)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'username', 'user_' || substr(new.id::text, 1, 8)),
+    0
+  );
+  return new;
+end;
+$$ language plpgsql security definer;
+
+create or replace trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
