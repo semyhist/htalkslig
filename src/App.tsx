@@ -80,9 +80,30 @@ const App: React.FC = () => {
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
-        .single();
+        .maybeSingle(); // .single() yerine: profil yoksa null döndürür, hata fırlatmaz
+
       if (error) throw error;
-      if (data) setUserProfile(data);
+
+      if (data) {
+        setUserProfile(data);
+      } else {
+        // Profil yok — oluşturmayı dene (trigger başarısız olmuş olabilir)
+        const username =
+          session.user.user_metadata?.username ||
+          'user_' + session.user.id.slice(0, 8);
+
+        const { data: created, error: createErr } = await supabase
+          .from('profiles')
+          .upsert([{ id: session.user.id, username, total_points: 0 }], { onConflict: 'id' })
+          .select()
+          .maybeSingle();
+
+        if (createErr) {
+          console.error('Profile auto-create error:', createErr);
+        } else if (created) {
+          setUserProfile(created);
+        }
+      }
     } catch (err: any) {
       console.error('Error fetching user profile:', err);
     }
@@ -438,14 +459,21 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        {session?.user && userProfile ? (
+        {session?.user ? (
           <div className="flex items-center gap-4">
+            {/* Kullanıcı bilgisi — userProfile yüklenmemiş olsa bile oturumu göster */}
             <div className="text-right hidden sm:block">
               <div className="flex items-center gap-1.5 justify-end">
                 <User className="w-3.5 h-3.5 text-violet-400" />
-                <span className="text-sm font-bold text-zinc-200">{userProfile.username}</span>
+                <span className="text-sm font-bold text-zinc-200">
+                  {userProfile?.username ||
+                    session.user.user_metadata?.username ||
+                    'Kullanıcı'}
+                </span>
               </div>
-              <p className="text-xs text-emerald-400 font-extrabold font-mono mt-0.5 tracking-wide">{userProfile.total_points} Puan</p>
+              <p className="text-xs text-emerald-400 font-extrabold font-mono mt-0.5 tracking-wide">
+                {userProfile ? `${userProfile.total_points} Puan` : '...'}
+              </p>
             </div>
             <div className="h-8 w-px bg-white/10 hidden sm:block"></div>
             <button
