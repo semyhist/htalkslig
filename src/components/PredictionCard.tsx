@@ -228,7 +228,7 @@ const countryCodes: Record<string, string> = {
   'solomon adalari': 'sb', 'solomon islands': 'sb'
 };
 
-export const PredictionCard: React.FC<PredictionCardProps> = React.memo(({
+export const PredictionCard: React.FC<PredictionCardProps> = ({
   match,
   initialPrediction,
   onPredict,
@@ -253,7 +253,7 @@ export const PredictionCard: React.FC<PredictionCardProps> = React.memo(({
     setIsSaved(!!initialPrediction);
     setSavedPrediction(initialPrediction || null);
     setSaveError(null);
-  }, [match.id]);
+  }, [match.id, initialPrediction]);
 
   // Seçim değiştiğinde "kaydedildi" badge'ini kaldır (yeni tahmin bekleniyor)
   const handleSelectOutcome = (selected: 'home' | 'draw' | 'away') => {
@@ -608,5 +608,5 @@ export const PredictionCard: React.FC<PredictionCardProps> = React.memo(({
       )}
     </div>
   );
-});
+};
 
