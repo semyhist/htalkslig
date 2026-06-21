@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from './lib/supabaseClient';
 import { Auth } from './components/Auth';
-import { Leaderboard, LeaderboardUser } from './components/Leaderboard';
+import { Leaderboard } from './components/Leaderboard';
+import type { LeaderboardUser } from './components/Leaderboard';
 import { MatchList } from './components/MatchList';
-import { fetchMatchesFromAPI, Match } from './utils/api';
+import { fetchMatchesFromAPI } from './utils/api';
+import type { Match } from './utils/api';
 
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
@@ -186,5 +188,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-```
-,Description:

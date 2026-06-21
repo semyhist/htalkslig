@@ -85,7 +85,10 @@ export const PredictionCard: React.FC<PredictionCardProps> = ({
         )}
       </div>
 
-      <div className="text-[10px] text-zinc-500 tracking-widest uppercase font-mono mb-2">⚽ fıfa world cup</div>
+      <div className="flex justify-between items-center text-[10px] text-zinc-500 tracking-widest uppercase font-mono mb-2 pr-24">
+        <span>⚽ fıfa world cup</span>
+        <span>{formattedDate}</span>
+      </div>
 
       {/* Teams Display Row */}
       <div className="flex justify-between items-center my-4 gap-4 border-y border-white/5 py-4">
