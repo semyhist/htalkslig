@@ -354,19 +354,17 @@ const App: React.FC = () => {
     }
   };
 
-  const handlePredict = async (matchId: string, outcome: 'home' | 'draw' | 'away', diff: number) => {
-    if (!session?.user || !userProfile) return;
+  const handlePredict = async (matchId: string, outcome: 'home' | 'draw' | 'away', diff: number): Promise<void> => {
+    if (!session?.user || !userProfile) throw new Error('Giriş yapılmadı.');
 
     // ── Güvenlik: Maç başladıysa tahmin kabul etme (client-side ek guard)
     const match = matches.find(m => m.id === matchId);
-    if (!match) return;
+    if (!match) throw new Error('Maç bulunamadı.');
     if (new Date(match.commence_time).getTime() <= Date.now()) {
-      console.warn('Tahmin reddedildi: maç zaten başlamış.');
-      return;
+      throw new Error('Tahmin süresi doldu: maç zaten başlamış.');
     }
     if (match.status !== 'pending') {
-      console.warn('Tahmin reddedildi: maç pending değil.');
-      return;
+      throw new Error('Bu maç için tahmin yapılamaz.');
     }
 
     // ── Güvenlik: gol farkı 0-20 arası tam sayı olmalı
@@ -379,30 +377,25 @@ const App: React.FC = () => {
       signedDiff = 0;
     }
 
-    const newPrediction = { outcome, diff: signedDiff };
-    setUserPredictions({ ...userPredictions, [matchId]: newPrediction });
+    setUserPredictions(prev => ({ ...prev, [matchId]: { outcome, diff: signedDiff } }));
 
-    try {
-      const { error, status } = await supabase.from('predictions').upsert(
-        [
-          {
-            user_id: session.user.id,
-            match_id: matchId,
-            predicted_outcome: outcome,
-            predicted_diff: signedDiff,
-          },
-        ],
-        { onConflict: 'user_id,match_id' }
-      );
+    const { error, status } = await supabase.from('predictions').upsert(
+      [
+        {
+          user_id: session.user.id,
+          match_id: matchId,
+          predicted_outcome: outcome,
+          predicted_diff: signedDiff,
+        },
+      ],
+      { onConflict: 'user_id,match_id' }
+    );
 
-      if (error) {
-        console.error('Tahmin kaydedilemedi:', error.message);
-        if (status === 404 || error.message?.includes('predictions') || error.message?.includes('does not exist')) {
-          setDbError('Tahmin kaydedilemedi. Supabase "predictions" tablosu bulunamadı. Lütfen SQL şemasını çalıştırın.');
-        }
+    if (error) {
+      if (status === 404 || error.message?.includes('predictions') || error.message?.includes('does not exist')) {
+        setDbError('Tahmin kaydedilemedi. Supabase "predictions" tablosu bulunamadı. Lütfen SQL şemasını çalıştırın.');
       }
-    } catch (err: any) {
-      console.error('Prediction upsert failed:', err);
+      throw new Error(error.message);
     }
   };
 

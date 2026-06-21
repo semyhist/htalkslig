@@ -6,7 +6,7 @@ import { Calendar } from 'lucide-react';
 interface MatchListProps {
   matches: Match[];
   userPredictions: Record<string, { outcome: 'home' | 'draw' | 'away'; diff: number }>;
-  onPredict: (matchId: string, outcome: 'home' | 'draw' | 'away', diff: number) => void;
+  onPredict: (matchId: string, outcome: 'home' | 'draw' | 'away', diff: number) => Promise<void>;
 }
 
 export const MatchList: React.FC<MatchListProps> = ({

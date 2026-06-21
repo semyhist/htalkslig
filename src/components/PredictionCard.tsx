@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Plus, Minus, CheckCircle, Clock, Award, Lock } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, Minus, CheckCircle, Clock, Award, Lock, Save, AlertCircle } from 'lucide-react';
 
 export interface MatchData {
   id: string;
@@ -17,7 +17,7 @@ export interface MatchData {
 interface PredictionCardProps {
   match: MatchData;
   initialPrediction?: { outcome: 'home' | 'draw' | 'away'; diff: number };
-  onPredict: (matchId: string, outcome: 'home' | 'draw' | 'away', diff: number) => void;
+  onPredict: (matchId: string, outcome: 'home' | 'draw' | 'away', diff: number) => Promise<void>;
 }
 
 // Map country names (Turkish & English) to ISO-2 codes
@@ -133,36 +133,70 @@ export const PredictionCard: React.FC<PredictionCardProps> = ({
     initialPrediction ? String(Math.abs(initialPrediction.diff)) : ''
   );
 
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(!!initialPrediction);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  // Saved value: son başarıyla kaydedilen tahmini takip eder
+  const [savedPrediction, setSavedPrediction] = useState(initialPrediction || null);
+
+  // initialPrediction değişirse (farklı maç render edilirse) state'i sıfırla
+  useEffect(() => {
+    setOutcome(initialPrediction?.outcome || null);
+    setDiff(initialPrediction ? String(Math.abs(initialPrediction.diff)) : '');
+    setIsSaved(!!initialPrediction);
+    setSavedPrediction(initialPrediction || null);
+    setSaveError(null);
+  }, [match.id]);
+
+  // Seçim değiştiğinde "kaydedildi" badge'ini kaldır (yeni tahmin bekleniyor)
   const handleSelectOutcome = (selected: 'home' | 'draw' | 'away') => {
     setOutcome(selected);
-    const diffVal = selected === 'draw' ? 0 : (parseInt(diff, 10) || 0);
     if (selected === 'draw') setDiff('0');
-    onPredict(match.id, selected, diffVal);
+    // Önceki tahmitten farklıysa kaydet badge'ini kaldır
+    if (selected !== savedPrediction?.outcome) {
+      setIsSaved(false);
+      setSaveError(null);
+    }
   };
 
   const handleDiffChange = (val: string) => {
-    setDiff(val);
-    if (outcome) {
-      const diffVal = outcome === 'draw' ? 0 : (parseInt(val, 10) || 0);
-      onPredict(match.id, outcome, diffVal);
+    // Maksimum 20 ile sınırla
+    const num = Math.min(20, Math.max(0, parseInt(val, 10) || 0));
+    setDiff(String(num));
+    if (num !== Math.abs(savedPrediction?.diff ?? -1)) {
+      setIsSaved(false);
+      setSaveError(null);
     }
   };
 
   const handleIncrement = () => {
     if (outcome === 'draw') return;
     const current = parseInt(diff, 10) || 0;
-    const nextVal = String(current + 1);
-    handleDiffChange(nextVal);
+    if (current < 20) handleDiffChange(String(current + 1));
   };
 
   const handleDecrement = () => {
     if (outcome === 'draw') return;
     const current = parseInt(diff, 10) || 0;
-    if (current > 0) {
-      const nextVal = String(current - 1);
-      handleDiffChange(nextVal);
+    if (current > 0) handleDiffChange(String(current - 1));
+  };
+
+  const handleSave = async () => {
+    if (!outcome || isSaving) return;
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      const diffVal = outcome === 'draw' ? 0 : (parseInt(diff, 10) || 0);
+      await onPredict(match.id, outcome, diffVal);
+      setSavedPrediction({ outcome, diff: outcome === 'away' ? -diffVal : diffVal });
+      setIsSaved(true);
+    } catch (err: any) {
+      setSaveError(err?.message || 'Tahmin kaydedilemedi.');
+    } finally {
+      setIsSaving(false);
     }
   };
+
 
   const normalizeTeamName = (name: string): string => {
     return name
@@ -412,6 +446,51 @@ export const PredictionCard: React.FC<PredictionCardProps> = ({
                 <Plus className="w-3.5 h-3.5" />
               </button>
             </div>
+          </div>
+
+          {/* ── KAYDET BUTONU ── */}
+          <div className="pt-1 space-y-2">
+            {/* Hata mesajı */}
+            {saveError && (
+              <div className="flex items-center gap-2 text-red-400 text-[10px] bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 font-mono">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                {saveError}
+              </div>
+            )}
+
+            <button
+              type="button"
+              disabled={!outcome || isSaving || isSaved}
+              onClick={handleSave}
+              className={`w-full py-3 rounded-xl font-bold text-sm font-mono tracking-wider transition-all duration-300 flex items-center justify-center gap-2 ${
+                isSaved
+                  ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 cursor-default'
+                  : !outcome
+                  ? 'bg-white/5 border border-white/5 text-zinc-600 cursor-not-allowed'
+                  : 'neon-btn-primary text-white'
+              }`}
+            >
+              {isSaving ? (
+                <>
+                  {/* Küçük spinner */}
+                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
+                  </svg>
+                  <span>Kaydediliyor...</span>
+                </>
+              ) : isSaved ? (
+                <>
+                  <CheckCircle className="w-4 h-4" />
+                  <span>Tahmin Kaydedildi ✓</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  <span>{outcome ? 'Tahminini Kaydet' : 'Önce Bir Sonuç Seç'}</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
       )}
