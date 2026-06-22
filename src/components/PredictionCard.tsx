@@ -304,6 +304,24 @@ export const PredictionCard: React.FC<PredictionCardProps> = ({
     }
   };
 
+  const handleSharePrediction = () => {
+    if (!outcome) return;
+    const homeTeam = translateToTurkish(match.home_team);
+    const awayTeam = translateToTurkish(match.away_team);
+    
+    let predictionText = '';
+    if (outcome === 'draw') {
+      predictionText = `Beraberlik (0-0)`;
+    } else {
+      const winner = outcome === 'home' ? homeTeam : awayTeam;
+      predictionText = `${winner} kazanır (${diff} fark)`;
+    }
+
+    const shareText = `🏆 WCTurkiye Dünya Kupası Tahmin Ligi'nde ${homeTeam} - ${awayTeam} maçına tahminim:\n🔥 ${predictionText}\n\nSen de tahminlerini yap, bana meydan oku!\n👉 wcturkiye.netlify.app`;
+    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
+    window.open(shareUrl, '_blank');
+  };
+
 
   const normalizeTeamName = (name: string): string => {
     return name
@@ -603,6 +621,20 @@ export const PredictionCard: React.FC<PredictionCardProps> = ({
                 </>
               )}
             </button>
+
+            {/* X (Twitter) Paylaşım Butonu */}
+            {isSaved && (
+              <button
+                type="button"
+                onClick={handleSharePrediction}
+                className="w-full py-2.5 rounded-xl border border-white/10 bg-black/40 hover:bg-white/5 transition-all text-xs font-bold font-mono tracking-wider flex items-center justify-center gap-1.5 text-zinc-300 hover:text-white"
+              >
+                <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+                <span>TAHMİNİ X'TE PAYLAŞ</span>
+              </button>
+            )}
           </div>
         </div>
       )}

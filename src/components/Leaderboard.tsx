@@ -16,6 +16,12 @@ export const Leaderboard: React.FC<LeaderboardProps> = React.memo(({ users, curr
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const handleShareRank = (rank: number, points: number) => {
+    const text = `🏆 WCTurkiye Dünya Kupası Tahmin Ligi'nde ${points} puanla ${rank}. sıradayım! 🔥\n\nSen de tahminlerini yap, bana meydan oku, zirveye ortak ol!\n👉 wcturkiye.netlify.app`;
+    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+    window.open(shareUrl, '_blank');
+  };
+
   // Helper to get initials
   const getInitials = (name: string) => {
     return name.slice(0, 2).toUpperCase();
@@ -92,9 +98,22 @@ export const Leaderboard: React.FC<LeaderboardProps> = React.memo(({ users, curr
             )}
           </span>
         </div>
-        <span className="text-xs font-bold text-zinc-300 font-mono bg-black/40 px-2.5 py-1 rounded-lg border border-white/5">
-          {user.total_points} Puan
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-zinc-300 font-mono bg-black/40 px-2.5 py-1 rounded-lg border border-white/5">
+            {user.total_points} Puan
+          </span>
+          {isCurrentUser && (
+            <button
+              onClick={() => handleShareRank(rank, user.total_points)}
+              title="Sıralamanı X'te Paylaş"
+              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 hover:text-white border border-white/10 text-zinc-400 transition-all flex items-center justify-center shadow-sm shrink-0"
+            >
+              <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
     );
   };

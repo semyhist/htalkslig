@@ -528,6 +528,21 @@ const App: React.FC = () => {
     setUserProfile(null);
   };
 
+  const getUserRank = () => {
+    if (!session?.user || users.length === 0) return null;
+    const index = users.findIndex(u => u.id === session.user.id);
+    return index !== -1 ? index + 1 : null;
+  };
+
+  const handleShareProfile = () => {
+    if (!userProfile) return;
+    const rank = getUserRank();
+    const rankText = rank ? `${rank}. sıradayım!` : 'yarışıyorum!';
+    const text = `🏆 WCTurkiye Dünya Kupası Tahmin Ligi'nde ${userProfile.total_points} puanla ${rankText} 🔥\n\nSen de tahminlerini yap, bana meydan oku, zirveye ortak ol!\n👉 wcturkiye.netlify.app`;
+    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+    window.open(shareUrl, '_blank');
+  };
+
   const filteredMatches = matches.filter((match) => {
     const matchTime = new Date(match.commence_time).getTime();
     const now = Date.now();
@@ -573,9 +588,22 @@ const App: React.FC = () => {
                     'Kullanıcı'}
                 </span>
               </div>
-              <p className="text-xs text-emerald-400 font-extrabold font-mono mt-0.5 tracking-wide">
-                {userProfile ? `${userProfile.total_points} Puan` : '...'}
-              </p>
+              <div className="flex items-center gap-2 justify-end mt-0.5">
+                <p className="text-xs text-emerald-400 font-extrabold font-mono tracking-wide">
+                  {userProfile ? `${userProfile.total_points} Puan` : '...'}
+                </p>
+                {userProfile && (
+                  <button
+                    onClick={handleShareProfile}
+                    title="Durumunu X'te Paylaş"
+                    className="p-1 rounded bg-white/5 hover:bg-white/10 hover:text-white text-zinc-400 border border-white/5 transition-all flex items-center justify-center shadow-sm shrink-0"
+                  >
+                    <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 24 24">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                  </button>
+                )}
+              </div>
             </div>
             <div className="h-8 w-px bg-white/10 hidden sm:block"></div>
             <button
