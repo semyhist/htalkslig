@@ -155,7 +155,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = React.memo(({ users, curr
                 </div>
                 <div>
                   <h3 className="text-base font-extrabold tracking-wide text-zinc-100 font-mono uppercase">LİDERLİK TABLOSU (TÜMÜ)</h3>
-                  <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold mt-0.5">HTALKS ARENA TÜM KATILIMCILAR</p>
+                  <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold mt-0.5">WCTURKİYE TÜM KATILIMCILAR</p>
                 </div>
               </div>
               <button

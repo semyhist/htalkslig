@@ -536,11 +536,11 @@ const App: React.FC = () => {
     if (matchTab === 'completed') {
       return match.status === 'completed';
     } else {
+      // Tamamlanmış maçları aktif maçlar sekmesinde gösterme
       if (match.status === 'completed') {
-        return matchTime >= now - oneDay && matchTime <= now;
-      } else {
-        return matchTime >= now - (1 * 60 * 60 * 1000) && matchTime <= now + oneDay;
+        return false;
       }
+      return matchTime >= now - (1 * 60 * 60 * 1000) && matchTime <= now + oneDay;
     }
   });
 
@@ -550,11 +550,11 @@ const App: React.FC = () => {
       <header className="glass-panel sticky top-0 z-50 border-b border-white/5 py-4 px-6 md:px-12 flex justify-between items-center shadow-[0_4px_30px_rgba(0,0,0,0.4)] backdrop-blur-xl">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center shadow-glow border border-white/10 overflow-hidden">
-            <img src="/logo.jpg" alt="HTalks Logo" className="w-full h-full object-cover" />
+            <img src="/logo.png" alt="WCTurkiye Logo" className="w-full h-full object-cover" />
           </div>
           <div>
             <h1 className="text-base md:text-lg font-extrabold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-white via-zinc-200 to-zinc-400 font-mono">
-              HTALKS HASTALARI
+              WCTURKİYE
             </h1>
             <p className="text-[9px] text-zinc-500 uppercase tracking-widest font-semibold">Dünya Kupası Tahmin Ligi</p>
           </div>
@@ -723,7 +723,7 @@ const App: React.FC = () => {
           {/* Bottom bar */}
           <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">
             <div className="text-[10px] text-zinc-600 font-mono uppercase tracking-widest text-center sm:text-left">
-              © {new Date().getFullYear()} HTalks Hastaları Dünya Kupası Tahmin Ligi — Tüm hakları saklıdır.
+              © {new Date().getFullYear()} WCTurkiye Dünya Kupası Tahmin Ligi — Tüm hakları saklıdır.
             </div>
             <div className="flex items-center gap-1.5 text-[10px] text-zinc-600 font-mono">
               <span className="uppercase tracking-widest">Yapımcı:</span>

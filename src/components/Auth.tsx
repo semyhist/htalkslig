@@ -45,7 +45,7 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
     setLoading(true);
 
     // Format username to dummy email for Supabase Auth
-    const dummyEmail = `${username.toLowerCase().trim()}@htalks.com`;
+    const dummyEmail = `${username.toLowerCase().trim()}@wcturkiye.com`;
 
     try {
       if (isSignUp) {
@@ -143,10 +143,10 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
 
       <div className="flex flex-col items-center mb-6">
         <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center shadow-glow mb-3 overflow-hidden">
-          <img src="/logo.jpg" alt="HTalks Logo" className="w-full h-full object-cover" />
+          <img src="/logo.png" alt="WCTurkiye Logo" className="w-full h-full object-cover" />
         </div>
         <h2 className="text-2xl font-extrabold text-center bg-clip-text text-transparent bg-gradient-to-r from-white via-zinc-200 to-zinc-400 font-mono tracking-wider">
-          HTALKS HASTALARI
+          WCTURKİYE
         </h2>
         <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1">Dünya Kupası Tahmin Ligi</p>
       </div>
